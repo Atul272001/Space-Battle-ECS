@@ -27,7 +27,10 @@ public partial struct EnemySpawnerSystem : ISystem
 
         enemySpawnerEntity = SystemAPI.GetSingletonEntity<EnemySpawnerComponent>();
         enemySpawnerComponent = entityManager.GetComponentData<EnemySpawnerComponent>(enemySpawnerEntity);
-
+        if (!SystemAPI.HasSingleton<PlayerComponent>())
+        {
+            return;
+        }
         playerEntity = SystemAPI.GetSingletonEntity<PlayerComponent>();
         SpawnEnemies(ref state);
     }

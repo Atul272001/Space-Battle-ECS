@@ -21,12 +21,14 @@ public partial class InputSystem : SystemBase
         Vector2 moveVector = controls.Player.Move.ReadValue<Vector2>();
         Vector2 movePosition = controls.Player.MousePos.ReadValue<Vector2>();
         bool shoot = controls.Player.Shoot.IsPressed();
+        bool pauseGame = controls.Player.GamePause.IsPressed();
 
         SystemAPI.SetSingleton(new InputComponent
         {
             Movement = moveVector,
             MousePosition = movePosition,
-            Shoot = shoot
+            Shoot = shoot,
+            PauseGame = pauseGame
         });
     }
 }

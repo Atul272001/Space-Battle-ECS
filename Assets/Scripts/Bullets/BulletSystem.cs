@@ -9,12 +9,24 @@ using Unity.Physics;
 [BurstCompile]
 public partial struct BulletSystem : ISystem
 {
-   private void OnUpdate(ref SystemState state)
+
+    private Entity playerEntity;
+    PlayerComponent playerComponent;
+
+    private void OnUpdate(ref SystemState state)
     {
+        if (!SystemAPI.HasSingleton<PlayerComponent>())
+        {
+            return;
+        }
         EntityManager entityManager = state.EntityManager;
         NativeArray<Entity> allEntities = entityManager.GetAllEntities();
+        
 
         PhysicsWorldSingleton physicsWorld = SystemAPI.GetSingleton<PhysicsWorldSingleton>();
+
+        playerEntity = SystemAPI.GetSingletonEntity<PlayerComponent>();
+        playerComponent = entityManager.GetComponentData<PlayerComponent>(playerEntity);
 
         foreach (Entity entity in allEntities)
         {
@@ -41,7 +53,7 @@ public partial struct BulletSystem : ISystem
                 float3 point1 = new float3(bulletTransform.Position - bulletTransform.Right() * 0.15f);
                 float3 point2 = new float3(bulletTransform.Position + bulletTransform.Right() * 0.15f);
 
-                uint layerMask = LayerMaskHelper.GetLayerMaskFromTwoLayers(CollisionLayer.Wall, CollisionLayer.Enemy);
+                uint layerMask = LayerMaskHelper.GetLayerMaskFromLayers(CollisionLayer.Enemy);
 
                 physicsWorld.CapsuleCastAll(point1, point2, bulletComponent.Size / 2, float3.zero, 1f, ref hits, new CollisionFilter
                 {
@@ -62,6 +74,12 @@ public partial struct BulletSystem : ISystem
                             
                             if(enemyComponent.CurrentHealth <= 0f)
                             {
+                                if (playerComponent.Health + 5 <= 1000)
+                                {
+                                    playerComponent.Health += 5;
+                                    entityManager.SetComponentData(playerEntity, playerComponent);
+                                    UIHandler.Instance.UpdatePlayerHealth((float)playerComponent.Health);
+                                }
                                 entityManager.DestroyEntity(hitEntity);
                             }
                         }

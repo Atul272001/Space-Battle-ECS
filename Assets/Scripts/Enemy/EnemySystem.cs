@@ -15,6 +15,10 @@ public partial struct EnemySystem : ISystem
     {
         entityManager = state.EntityManager;
 
+        if (!SystemAPI.HasSingleton<PlayerComponent>())
+        {
+            return;
+        }
         playerEntity = SystemAPI.GetSingletonEntity<PlayerComponent>();
         LocalTransform playerTransform = entityManager.GetComponentData<LocalTransform>(playerEntity);
 

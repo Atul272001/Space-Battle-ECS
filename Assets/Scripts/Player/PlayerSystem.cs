@@ -1,9 +1,10 @@
-using UnityEngine;
+using System;
+using Unity.Collections;
 using Unity.Entities;
 using Unity.Mathematics;
+using Unity.Physics;
 using Unity.Transforms;
-using Unity.Collections;
-using System;
+using UnityEngine;
 
 public partial struct PlayerSystem : ISystem
 {
@@ -18,6 +19,10 @@ public partial struct PlayerSystem : ISystem
     public void OnUpdate(ref SystemState state)
     {
         entityManager = state.EntityManager;
+        if (!SystemAPI.HasSingleton<PlayerComponent>())
+        {
+            return;
+        }
         playerEntity = SystemAPI.GetSingletonEntity<PlayerComponent>();
         inputEntity = SystemAPI.GetSingletonEntity<InputComponent>();
 
@@ -26,6 +31,64 @@ public partial struct PlayerSystem : ISystem
 
         Move(ref state);
         Shoot(ref state);
+        PauseGame();
+        DamageHealthDamage();
+    }
+
+    private void PauseGame()
+    {
+        if (inputComponent.PauseGame)
+        {
+            UIHandler.Instance.PauseGame();
+        }
+    }
+
+    private void DamageHealthDamage()
+    {
+        LocalTransform playerTransform = entityManager.GetComponentData<LocalTransform>(playerEntity);
+        PhysicsWorldSingleton physicsWorld = SystemAPI.GetSingleton<PhysicsWorldSingleton>();
+
+        float3 up = playerTransform.Up();
+        float totalHeight = 2f;
+        float capsuleHalfHeight = totalHeight * 0.5f;
+        float radius = 0.5f;
+        float inner = math.max(0f, capsuleHalfHeight - radius);
+
+        float3 p1 = playerTransform.Position + up * inner;
+        float3 p2 = playerTransform.Position - up * inner;
+
+        NativeList<ColliderCastHit> hits = new NativeList<ColliderCastHit>(Allocator.Temp);
+
+        var filter = new CollisionFilter
+        {
+            BelongsTo = (uint)CollisionLayer.Default,
+            CollidesWith = LayerMaskHelper.GetLayerMaskFromLayers(CollisionLayer.Enemy)
+        };
+
+        physicsWorld.CapsuleCastAll(p1, p2, radius, new float3(0, 0, 0), 0f, ref hits, filter);
+
+        if(hits.Length > 0)
+        {
+            for (int i = 0; i < hits.Length; i++)
+            {
+                Entity hitEntity = hits[i].Entity;
+                if (entityManager.HasComponent<EnemyComponent>(hitEntity))
+                {
+                    playerComponent.Health -= 20;
+                    UIHandler.Instance.UpdatePlayerHealth((float)playerComponent.Health);
+                    entityManager.SetComponentData(playerEntity, playerComponent);
+                    entityManager.DestroyEntity(hitEntity);
+
+                    if (playerComponent.Health <= 0f)
+                    {
+                        UIHandler.Instance.GameOverPannel();
+                        entityManager.DestroyEntity(playerEntity);
+                    }
+                }
+            }
+        }
+
+        hits.Dispose();
     }
 
     private void Move(ref SystemState state)
@@ -54,7 +117,7 @@ public partial struct PlayerSystem : ISystem
                 {
                     Speed = 25f,
                     Size = 0.25f,
-                    Damage = 10f
+                    Damage = 2f
                 });
 
                 ECB.AddComponent(bulletEntity, new BulletLifeTimeComponent

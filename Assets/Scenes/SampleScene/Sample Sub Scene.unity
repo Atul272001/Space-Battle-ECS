@@ -297,6 +297,11 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 1918396216869356859, guid: 1e49efb39e341ae46a92ef3812c9e5c6,
         type: 3}
+      propertyPath: Health
+      value: 1000
+      objectReference: {fileID: 0}
+    - target: {fileID: 1918396216869356859, guid: 1e49efb39e341ae46a92ef3812c9e5c6,
+        type: 3}
       propertyPath: BulletSpread
       value: 0.95
       objectReference: {fileID: 0}

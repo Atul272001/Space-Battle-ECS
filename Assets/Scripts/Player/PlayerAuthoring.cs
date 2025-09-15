@@ -4,9 +4,12 @@ using Unity.Entities;
 public class PlayerAuthoring : MonoBehaviour
 {
     public float MoveSpeed = 5f;
+    public int Health = 100;
     public GameObject BulletPrefab;
     public int NumOfBulletsToSpawn = 50;
     [Range(0f, 10f)] public float BulletSpread = 5f;
+
+    Entity inputEntity;
 
     public class PlayerBaker : Baker<PlayerAuthoring>
     {
@@ -20,9 +23,9 @@ public class PlayerAuthoring : MonoBehaviour
                 BulletPrefab = GetEntity(authoring.BulletPrefab, TransformUsageFlags.None),
                 BulletSpread = authoring.BulletSpread,
                 NumOfBulletsToSpawn = authoring.NumOfBulletsToSpawn,
+                Health = authoring.Health,
                 
             });
         }
     }
-
 }
